@@ -19,6 +19,7 @@
 #include "coop/vats_feel.h"
 #include "coop/face_tone.h"
 #include "coop/clock.h"
+#include "coop/control_prompt.h"
 #include "coop/steer.h"
 #include "coop/talk_log.h"
 #include "config.h"
@@ -6501,4 +6502,59 @@ TEST(friends_face_gets_its_skin_tone_on_each_head_the_game_builds)
     CHECK(!wrap.Check(0x1000, true, 0xFFFFFFFFu));
     CHECK(!wrap.Check(0x2000, true, 0xFFFFFFFFu));
     CHECK(wrap.Check(0x2000, true, 1));
+}
+
+// FNVVR-Coop-Compat: gamepad support for co-op's own controls
+TEST(a_gamepad_button_bound_to_a_control_counts_as_pressed)
+{
+    using namespace coop;
+    PadState state;
+    CHECK(!PadInputHeld(0x0A, state));
+    state.buttons = pad::kA;
+    CHECK(PadInputHeld(0x0A, state));          // A
+    CHECK(!PadInputHeld(0x0B, state));         // B
+    CHECK(!PadInputHeld(kPadUnbound, state));
+    state.buttons = pad::kRightShoulder | pad::kDpadLeft;
+    CHECK(PadInputHeld(0x0E, state) && PadInputHeld(0x05, state) && !PadInputHeld(0x0F, state));
+    state = {};
+    state.rightTrigger = pad::kTriggerThreshold;
+    CHECK(!PadInputHeld(0x11, state));         // a resting trigger is not a press
+    state.rightTrigger = 255;
+    CHECK(PadInputHeld(0x11, state) && !PadInputHeld(0x10, state));
+    state = {};
+    state.thumbLY = 20000;
+    CHECK(PadInputHeld(0x12, state) && !PadInputHeld(0x13, state));
+}
+
+TEST(prompts_name_the_gamepad_button_only_while_the_gamepad_is_used)
+{
+    using namespace coop;
+    CHECK(ControlPromptName(false, 0x0A, "E", "E") == "E");
+    CHECK(ControlPromptName(true, 0x0A, "E", "E") == "A");
+    CHECK(ControlPromptName(true, 0x0E, "Z", "Z") == "RB");
+    CHECK(ControlPromptName(true, kPadUnbound, "Z", "Z") == "Z");   // no button bound: the key
+    CHECK(ControlPromptName(false, 0x0A, "", "E") == "E");          // no key name: the game's default
+    CHECK(ControlPromptName(false, 0x0A, "F", "E") == "F");         // rebound key
+}
+
+TEST(the_device_last_used_decides_the_prompts)
+{
+    using namespace coop;
+    InputDevice device;
+    CHECK(!device.Gamepad());
+    device.Update(false, false);
+    CHECK(!device.Gamepad());
+    device.Update(true, false);
+    CHECK(device.Gamepad());
+    device.Update(false, false);
+    CHECK(device.Gamepad());                   // idle keeps the last device
+    device.Update(true, true);
+    CHECK(device.Gamepad());                   // both at once: no change
+    device.Update(false, true);
+    CHECK(!device.Gamepad());
+    PadState idle;
+    idle.thumbLX = 3000;                       // stick drift inside the dead zone
+    CHECK(!PadActive(idle));
+    idle.leftTrigger = 200;
+    CHECK(PadActive(idle));
 }

@@ -4,6 +4,7 @@
 
 #include "game/far_cells.h"
 #include "game/game.h"
+#include "game/addresses.h"
 #include "coop/clock.h"
 #include "log.h"
 
@@ -152,7 +153,7 @@ namespace game
                 if (e.downed)
                 {
                     SetEssential(e.ref, true);
-                    Notify((remote.name + " is down! Hold the activate key next to them to revive").c_str());
+                    Notify((remote.name + " is down! Hold " + ControlName(layout::kControlActivate, "E") + " next to them to revive").c_str());
                 }
                 else
                 {

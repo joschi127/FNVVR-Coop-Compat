@@ -11,6 +11,7 @@
 #include "coop/talk_log.h"
 #include "coop/vats_feel.h"
 #include "coop/balance.h"
+#include "coop/control_prompt.h"
 
 #include <algorithm>
 #include <cstdlib>
@@ -3584,13 +3585,99 @@ namespace game
         return std::sqrt(dx * dx + dy * dy + dz * dz);
     }
 
+    // FNVVR-Coop-Compat: xNVSE's IsControlPressed reads the keyboard and the mouse only. The game's own gamepad
+    // state and bindings cover a gamepad and the virtual gamepad of VR mods (FNVVR).
+    namespace
+    {
+        const uint8_t* InputGlobals()
+        {
+            return *reinterpret_cast<const uint8_t* const*>(addr::kInputGlobals);
+        }
+
+        coop::PadState GamepadState()
+        {
+            const uint8_t* raw = reinterpret_cast<const uint8_t*>(addr::kGamepadState) + layout::kGamepadButtons;
+            coop::PadState state;
+            std::memcpy(&state.buttons, raw, 2);
+            state.leftTrigger = raw[2];
+            state.rightTrigger = raw[3];
+            std::memcpy(&state.thumbLX, raw + 4, 2);
+            std::memcpy(&state.thumbLY, raw + 6, 2);
+            return state;
+        }
+
+        uint8_t Bind(uint32_t table, int control)
+        {
+            const uint8_t* input = InputGlobals();
+            return input && control >= 0 && control < 28 ? input[table + control] : coop::kPadUnbound;
+        }
+
+        coop::InputDevice g_inputDevice;
+
+        // The device the player used last: prompts name its key or button
+        bool UsingGamepad()
+        {
+            const uint8_t* input = InputGlobals();
+            if (!input)
+                return false;
+            bool keys = false;
+            for (uint32_t i = 0; i < 256 && !keys; ++i)
+                keys = (input[layout::kInputKeyStates + i] & 0x80) != 0;
+            for (uint32_t i = 0; i < 8 && !keys; ++i)
+                keys = (input[layout::kInputMouseStates + i] & 0x80) != 0;
+            g_inputDevice.Update(coop::PadActive(GamepadState()), keys);
+            return g_inputDevice.Gamepad();
+        }
+
+        std::string KeyName(int control)
+        {
+            uint8_t key = Bind(layout::kInputKeyBinds, control);
+            if (key != coop::kPadUnbound && key != 0)
+            {
+                // DirectInput key codes are scan codes; codes from 0x80 on are extended keys
+                char name[32] = {};
+                LONG param = static_cast<LONG>((key & 0x7F) << 16) | (key & 0x80 ? (1 << 24) : 0);
+                if (GetKeyNameTextA(param, name, sizeof(name)) > 0)
+                    return name;
+            }
+            uint8_t button = Bind(layout::kInputMouseBinds, control);
+            if (button != coop::kPadUnbound)
+                return button == 0 ? "Left mouse button" : button == 1 ? "Right mouse button" :
+                    "Mouse button " + std::to_string(button + 1);
+            return {};
+        }
+    }
+
     bool IsControlPressed(int control)
     {
+        uint8_t padInput = Bind(layout::kInputPadBinds, control);
+        if (padInput != coop::kPadUnbound && coop::PadInputHeld(padInput, GamepadState()))
+            return true;
         NVSEArrayVarInterface::Element result;
         if (!g_compiled || !Player() ||
             !g_scripts->CallFunction(g_controlPressed, Player(), nullptr, &result, 1, static_cast<uint32_t>(control)))
             return false;
         return result.GetNumber() != 0;
+    }
+
+    std::string ControlName(int control, const char* defaultKey)
+    {
+        static bool logged = false;
+        if (!logged && InputGlobals())
+        {
+            logged = true;
+            LOG_INFO("Controls: Activate key %02X pad %02X, Grab key %02X pad %02X (pad codes: 0A = A, FF = unbound)",
+                Bind(layout::kInputKeyBinds, layout::kControlActivate), Bind(layout::kInputPadBinds, layout::kControlActivate),
+                Bind(layout::kInputKeyBinds, layout::kControlGrab), Bind(layout::kInputPadBinds, layout::kControlGrab));
+        }
+        return coop::ControlPromptName(UsingGamepad(), Bind(layout::kInputPadBinds, control), KeyName(control),
+            defaultKey);
+    }
+
+    bool SameGamepadInput(int control, int other)
+    {
+        uint8_t a = Bind(layout::kInputPadBinds, control);
+        return a != coop::kPadUnbound && a == Bind(layout::kInputPadBinds, other);
     }
 
     void MakeCompanion(TESObjectREFR* ref)

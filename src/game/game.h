@@ -254,6 +254,10 @@ namespace game
     void WakeUp(TESObjectREFR* ref);
     void SetPlayerControls(bool on);
     bool IsControlPressed(int control);
+    // FNVVR-Coop-Compat: the key or gamepad button a prompt names for a control, and whether two controls share
+    // one gamepad button
+    std::string ControlName(int control, const char* defaultKey);
+    bool SameGamepadInput(int control, int other);
     int LifeState(const TESObjectREFR* ref);
     bool IsKnockedOut(const TESObjectREFR* ref);
     bool IsDead(const TESObjectREFR* ref);

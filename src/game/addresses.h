@@ -28,6 +28,10 @@ namespace game::addr
     constexpr uintptr_t kTileSetValueFloat = 0x00A012D0;
     constexpr uintptr_t kLoadSave = 0x00850760;
     constexpr uintptr_t kStartMenuOptions = 0x011DAB88;
+    // FNVVR-Coop-Compat: the game's input object (OSInputGlobals*) and the gamepad state it polls each frame
+    // (XINPUT_GAMEPAD with a leading event count; VR mods feeding a virtual gamepad write it too)
+    constexpr uintptr_t kInputGlobals = 0x011F35CC;
+    constexpr uintptr_t kGamepadState = 0x011F35A8;
     constexpr uintptr_t kMakeStartMenuOptionsCall = 0x007CB886;
     constexpr uintptr_t kMakeStartMenuOptions = 0x007CC6E0;
     constexpr uintptr_t kStartMenuOptionInit = 0x007CE620;
@@ -278,6 +282,14 @@ namespace game::ids
 
 namespace game::layout
 {
+    // FNVVR-Coop-Compat: OSInputGlobals fields: current key and mouse button states, and one bound input per
+    // control for the keyboard (DirectInput key), the mouse (button) and the gamepad (input code); 0xFF unbound
+    constexpr uint32_t kInputKeyStates = 0x18F8;
+    constexpr uint32_t kInputMouseStates = 0x1B30;
+    constexpr uint32_t kInputKeyBinds = 0x1B94;
+    constexpr uint32_t kInputMouseBinds = 0x1BB0;
+    constexpr uint32_t kInputPadBinds = 0x1BE8;
+    constexpr uint32_t kGamepadButtons = 0x04;
     constexpr uint8_t kExtraLeveledCreature = 0x2E;
     constexpr uint8_t kExtraGhost = 0x1F;
     constexpr uint32_t kLeveledBaseForm = 0x0C;

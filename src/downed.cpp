@@ -87,6 +87,9 @@
     uint32_t g_healFixAt = 0;
 
     const char* HealItemName(uint32_t item) { return item == coop::kSuperStimpak ? "Super Stimpak" : "Stimpak"; }
+    // FNVVR-Coop-Compat: prompts name the key or gamepad button bound to the control (the game's defaults were E and Z)
+    std::string ActivateName() { return game::ControlName(game::layout::kControlActivate, "E"); }
+    std::string GrabName() { return game::ControlName(game::layout::kControlGrab, "Z"); }
 
     void ApplyHeals(TESObjectREFR* player, uint32_t now)
     {
@@ -166,7 +169,7 @@
             return true;
         }
         int left = item == coop::kStimpak ? stims : supers;
-        g_reviveHint = "Hold E to give a " + std::string(HealItemName(item)) + " to " + aimedAt->name + " (" +
+        g_reviveHint = "Hold " + ActivateName() + " to give a " + std::string(HealItemName(item)) + " to " + aimedAt->name + " (" +
             std::to_string(left) + " left)";
         bool holding = coop::IsDue(now, g_reviveAgainAt) &&
             (game::IsControlPressed(game::layout::kControlActivate) || !coop::IsDue(now, g_labHoldUntil));
@@ -376,9 +379,9 @@
         else if (grabTapped && target >= 0 && g_coop.DraggedBy(static_cast<uint8_t>(target)) < 0)
             g_coop.Drag(static_cast<uint8_t>(target), true);
         if (dragging >= 0)
-            g_reviveHint = "Dragging " + g_coop.NameOf(static_cast<uint8_t>(dragging)) + ": Z to let go";
+            g_reviveHint = "Dragging " + g_coop.NameOf(static_cast<uint8_t>(dragging)) + ": " + GrabName() + " to let go";
         else if (target >= 0)
-            g_reviveHint = "Hold E to revive " + name + ", Z to drag";
+            g_reviveHint = "Hold " + ActivateName() + " to revive " + name + ", " + GrabName() + " to drag";
         if (dragging < 0 && target < 0 && UpdateHealAlly(now, player))
         {
             g_reviving = -1;
