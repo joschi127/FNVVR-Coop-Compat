@@ -1,3 +1,13 @@
+# FNVVR-Coop-Compat
+
+> **Modified version, not the official New Vegas Co-op.** Based on
+> [New Vegas Co-op](https://github.com/Zyrcxies/NewVegasCoop) by Zyrcxies, under its licence (`LICENSE`).
+> Small changes so it plays well with the VR mod [FNVVR](https://github.com/joschi127/FNVVR) and with gamepads:
+> reviving, dragging and giving a Stimpak work with a gamepad or VR controllers, and their prompts name the key or
+> button actually bound. Fork notes: [docs/guidelines.md](docs/guidelines.md). The original README follows.
+
+---
+
 # New Vegas Co-op
 
 A co-op multiplayer mod for Fallout: New Vegas (Steam) for a host and 2-4 friends doing a playthrough together.
