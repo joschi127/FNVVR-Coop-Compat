@@ -33,8 +33,8 @@ At the sides the arm's length lies in between (50 with the defaults). The dragge
 follows on stairs. Dragging stays within one place: when both are more than 400 units apart or in different places
 (a door, fast travel), the dragger lets go and the friend's bleed-out runs again.
 
-Decision and alternatives: [ADR 0001](adr/0001-drag-at-arms-length.md). Test state: arm's length not yet tested in
-game; to watch: doors (loading may end a drag early), turning the head in VR.
+Decision and alternatives: [ADR 0001](adr/0001-drag-at-arms-length.md). Test state: tested in game (host in VR,
+friend flat), the defaults feel right; to watch: doors (loading may end a drag early), turning the head in VR.
 
 ## Quick start
 
