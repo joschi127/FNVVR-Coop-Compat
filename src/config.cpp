@@ -1,4 +1,5 @@
 // New Vegas Co-op by Zyrcxies (https://github.com/Zyrcxies/NewVegasCoop). Reusing this code? See LICENSE: credit and the same license are required.
+// Modified in FNVVR-Coop-Compat (https://github.com/joschi127/FNVVR-Coop-Compat): DragDistance setting.
 
 #include "config.h"
 #include "log.h"
@@ -233,6 +234,7 @@ Config Config::Load(const std::string& iniPath)
     c.secondCopyWaits = Read(iniPath, "SecondCopyWaits", "0") == "1";
     c.blockDiscordOverlay = Read(iniPath, "BlockDiscordOverlay", "1") != "0";
     c.borderless = Read(iniPath, "Borderless", "1") != "0";
+    c.dragDistance = Number(Read(iniPath, "DragDistance", "30"), 0, 300, 30);  // FNVVR-Coop-Compat
     c.desyncNotices = Read(iniPath, "DesyncNotices", "1") != "0";
     c.syncRadio = Read(iniPath, "SyncRadio", "1") != "0";
     c.chat = Read(iniPath, "Chat", "1") != "0";

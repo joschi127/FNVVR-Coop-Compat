@@ -1,5 +1,5 @@
 // New Vegas Co-op by Zyrcxies (https://github.com/Zyrcxies/NewVegasCoop). Reusing this code? See LICENSE: credit and the same license are required.
-// Modified in FNVVR-Coop-Compat (https://github.com/joschi127/FNVVR-Coop-Compat): revive, drag and Stimpak prompts name the bound key or gamepad button; a tap of Activate drags; the dragged friend is a little further behind.
+// Modified in FNVVR-Coop-Compat (https://github.com/joschi127/FNVVR-Coop-Compat): revive, drag and Stimpak prompts name the bound key or gamepad button; a tap of Activate drags; where a dragged friend lies is set in NVCoop.ini.
 
 #include "nvse/PluginAPI.h"
 #include "config.h"
@@ -16,6 +16,7 @@
 #include "coop/balance.h"
 #include "coop/steer.h"
 #include "coop/control_prompt.h"
+#include "coop/drag_trail.h"
 #include "speech.h"
 #include "display.h"
 #include "voice_out.h"
@@ -74,11 +75,11 @@
     bool g_gameOver = false;
     int g_reviving = -1;
     uint32_t g_reviveStart = 0, g_reviveAgainAt = 0;
-    // FNVVR-Coop-Compat: 98 instead of 70 (about 40 cm more): close behind, the dragged friend was only in view when
-    // looking straight down, which in VR means bending the head down
-    constexpr float kDragBehind = 98;
     constexpr float kDragFollowMax = 400;
     bool g_grabWas = false;
+    // FNVVR-Coop-Compat: the way a dragged friend trails (see coop/drag_trail.h)
+    bool g_trailKnown = false;
+    float g_trailFromX = 0, g_trailFromY = 0, g_trailX = 0, g_trailY = 0;
     int g_draggedBy = -1;
     uint32_t g_draggedSince = 0;
     std::string g_reviveHint;
@@ -337,6 +338,8 @@
                 g_downedAt += now - g_draggedSince;
             g_draggedBy = draggedBy;
         }
+        if (!(g_downed && draggedBy >= 0))
+            g_trailKnown = false;
         if (g_downed && draggedBy >= 0)
         {
             auto it = g_coop.Remotes().find(static_cast<uint8_t>(draggedBy));
@@ -344,8 +347,21 @@
             if (it != g_coop.Remotes().end() && it->second.motion.Sample(now, them) && them.space == me.space)
             {
                 coop::Pose to = me;
-                to.x = them.x - kDragBehind * std::sin(them.heading);
-                to.y = them.y - kDragBehind * std::cos(them.heading);
+                // FNVVR-Coop-Compat: trail the way the dragger walks, NVCoop.ini DragDistance away (the original lay
+                // 70 behind them whichever way they walked; walking backwards, as people drag, left the friend
+                // behind their back and out of view in VR). Standing still keeps the last side; at first, behind.
+                if (!g_trailKnown)
+                {
+                    g_trailFromX = them.x;
+                    g_trailFromY = them.y;
+                    g_trailX = -std::sin(them.heading);
+                    g_trailY = -std::cos(them.heading);
+                    g_trailKnown = true;
+                }
+                coop::DragTrail(g_trailFromX, g_trailFromY, them.x, them.y, g_trailX, g_trailY);
+                float away = static_cast<float>(g_config.dragDistance);
+                to.x = them.x + away * g_trailX;
+                to.y = them.y + away * g_trailY;
                 to.heading = them.heading;
                 if (std::fabs(them.z - me.z) > 60)
                     to.z = them.z;

@@ -1,4 +1,5 @@
 // New Vegas Co-op by Zyrcxies (https://github.com/Zyrcxies/NewVegasCoop). Reusing this code? See LICENSE: credit and the same license are required.
+// Modified in FNVVR-Coop-Compat (https://github.com/joschi127/FNVVR-Coop-Compat): DragDistance setting.
 
 #pragma once
 
@@ -19,6 +20,10 @@ struct Config
     bool secondCopyWaits = false;
     bool blockDiscordOverlay = true;
     bool borderless = true;
+    // FNVVR-Coop-Compat: how far a dragged downed player lies from the one dragging them, in game units. They trail
+    // the way the dragger walks: in front when walking backwards (as people drag, and in view in VR), behind when
+    // walking forwards. The original lay 70 behind.
+    int dragDistance = 30;
     bool desyncNotices = true;
     int fieldOfView = 0;
     bool friendMarkers = true;

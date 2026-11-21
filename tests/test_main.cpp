@@ -21,6 +21,7 @@
 #include "coop/face_tone.h"
 #include "coop/clock.h"
 #include "coop/control_prompt.h"
+#include "coop/drag_trail.h"
 #include "coop/steer.h"
 #include "coop/talk_log.h"
 #include "config.h"
@@ -6558,4 +6559,18 @@ TEST(the_device_last_used_decides_the_prompts)
     CHECK(!PadActive(idle));
     idle.leftTrigger = 200;
     CHECK(PadActive(idle));
+}
+
+TEST(a_dragged_friend_trails_the_way_the_dragger_walks)
+{
+    using namespace coop;
+    float fromX = 0, fromY = 0, trailX = 0, trailY = -1;     // at first: behind (heading +Y)
+    DragTrail(fromX, fromY, 0, 3, trailX, trailY);           // a small step: no change
+    CHECK(trailX == 0 && trailY == -1 && fromY == 0);
+    DragTrail(fromX, fromY, 0, -20, trailX, trailY);         // walking backwards (towards -Y): friend in front (+Y)
+    CHECK(std::fabs(trailX) < 1e-5f && std::fabs(trailY - 1) < 1e-5f && fromY == -20);
+    DragTrail(fromX, fromY, 0, -20, trailX, trailY);         // standing still keeps the side
+    CHECK(std::fabs(trailY - 1) < 1e-5f);
+    DragTrail(fromX, fromY, 30, -20, trailX, trailY);        // sideways to +X: friend on -X
+    CHECK(std::fabs(trailX + 1) < 1e-5f && std::fabs(trailY) < 1e-5f);
 }
