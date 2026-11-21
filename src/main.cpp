@@ -1,5 +1,6 @@
 // New Vegas Co-op by Zyrcxies (https://github.com/Zyrcxies/NewVegasCoop). Reusing this code? See LICENSE: credit and the same license are required.
-// Modified in FNVVR-Coop-Compat (https://github.com/joschi127/FNVVR-Coop-Compat): "The last IP address" comes first when joining.
+// Modified in FNVVR-Coop-Compat (https://github.com/joschi127/FNVVR-Coop-Compat): "The last IP address" comes first when joining,
+// hosting by IP first when hosting.
 
 #include "nvse/PluginAPI.h"
 
@@ -393,8 +394,10 @@ namespace
     {
         if (PluginsMissing())
             return;
-        g_askedHostWho = game::AskChoice("Who can join your game?", {"Steam friends", "Steam friends, and by IP address",
-            "Cancel"}, kHostWhoQuestion);
+        // FNVVR-Coop-Compat: hosting by IP first (the button a gamepad or VR controller has selected), to match
+        // "The last IP address" coming first when joining
+        g_askedHostWho = game::AskChoice("Who can join your game?", {"Steam friends, and by IP address",
+            "Steam friends", "Cancel"}, kHostWhoQuestion);
     }
 
     void HostFor(bool byIp)
@@ -583,7 +586,7 @@ namespace
             {
                 g_askedHostWho = false;
                 if (who == 0 || who == 1)
-                    HostFor(who == 1);
+                    HostFor(who == 0);
             }
         }
         if (g_askedHowToJoin)
@@ -1745,8 +1748,8 @@ namespace
                 g_askedHostWho = false;
                 if (choice > 1)
                     return "cancelled";
-                HostFor(choice == 1);
-                return choice == 1 ? "hosting, by IP too" : "hosting";
+                HostFor(choice == 0);
+                return choice == 0 ? "hosting, by IP too" : "hosting";
             }
             g_askedHowToJoin = false;
             if (choice >= static_cast<int>(g_howChoices.size()))
