@@ -33,8 +33,12 @@ At the sides the arm's length lies in between (50 with the defaults). The dragge
 follows on stairs. Dragging stays within one place: when both are more than 400 units apart or in different places
 (a door, fast travel), the dragger lets go and the friend's bleed-out runs again.
 
+Through a door: the dragger lets go when the door loads the other place; New Vegas Co-op then brings the friend
+through the door as it does for every player, and they arrive standing (seen in game). That fits fleeing from a
+fight to a safe place and is kept.
+
 Decision and alternatives: [ADR 0001](adr/0001-drag-at-arms-length.md). Test state: tested in game (host in VR,
-friend flat), the defaults feel right; to watch: doors (loading may end a drag early), turning the head in VR.
+friend flat), the defaults feel right; to watch: turning the head in VR.
 
 ## Quick start
 
