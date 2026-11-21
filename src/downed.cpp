@@ -1,5 +1,5 @@
 // New Vegas Co-op by Zyrcxies (https://github.com/Zyrcxies/NewVegasCoop). Reusing this code? See LICENSE: credit and the same license are required.
-// Modified in FNVVR-Coop-Compat (https://github.com/joschi127/FNVVR-Coop-Compat): revive, drag and Stimpak prompts name the bound key or gamepad button.
+// Modified in FNVVR-Coop-Compat (https://github.com/joschi127/FNVVR-Coop-Compat): revive, drag and Stimpak prompts name the bound key or gamepad button; a tap of Activate drags.
 
 #include "nvse/PluginAPI.h"
 #include "config.h"
@@ -15,6 +15,7 @@
 #include "coop/reinforcements.h"
 #include "coop/balance.h"
 #include "coop/steer.h"
+#include "coop/control_prompt.h"
 #include "speech.h"
 #include "display.h"
 #include "voice_out.h"
@@ -258,6 +259,17 @@
         }
         bool grab = game::IsControlPressed(game::layout::kControlGrab), grabTapped = grab && !g_grabWas;
         g_grabWas = grab;
+        // FNVVR-Coop-Compat: a short tap of Activate drags or lets go too (holding it revives). VR mods may keep the
+        // game's Grab for themselves (FNVVR grabs objects with the grip and never passes Grab to the game), and a tap
+        // of the same button is simpler on every controller.
+        static bool s_activateWas = false;
+        static uint32_t s_activateDownAt = 0;
+        bool activate = game::IsControlPressed(game::layout::kControlActivate);
+        if (activate && !s_activateWas)
+            s_activateDownAt = now;
+        bool activateTapped = !activate && s_activateWas && now - s_activateDownAt < coop::kActivateTapMs;
+        s_activateWas = activate;
+        grabTapped = grabTapped || activateTapped;
         g_reviveHint.clear();
         if (!g_coop.InGame() || g_gameOver || g_waitForHostLoad)
         {
@@ -380,9 +392,10 @@
         else if (grabTapped && target >= 0 && g_coop.DraggedBy(static_cast<uint8_t>(target)) < 0)
             g_coop.Drag(static_cast<uint8_t>(target), true);
         if (dragging >= 0)
-            g_reviveHint = "Dragging " + g_coop.NameOf(static_cast<uint8_t>(dragging)) + ": " + GrabName() + " to let go";
+            g_reviveHint = "Dragging " + g_coop.NameOf(static_cast<uint8_t>(dragging)) + ": tap " + ActivateName() +
+                " to let go";
         else if (target >= 0)
-            g_reviveHint = "Hold " + ActivateName() + " to revive " + name + ", " + GrabName() + " to drag";
+            g_reviveHint = "Hold " + ActivateName() + " to revive " + name + ", tap it to drag";
         if (dragging < 0 && target < 0 && UpdateHealAlly(now, player))
         {
             g_reviving = -1;

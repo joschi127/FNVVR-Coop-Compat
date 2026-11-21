@@ -20,6 +20,9 @@ namespace coop
         int16_t thumbLX = 0, thumbLY = 0;
     };
 
+    // A press of Activate shorter than this is a tap (drags a downed friend or lets go); holding it revives
+    constexpr uint32_t kActivateTapMs = 350;
+
     namespace pad
     {
         // XInput button masks
