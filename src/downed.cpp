@@ -1,5 +1,5 @@
 // New Vegas Co-op by Zyrcxies (https://github.com/Zyrcxies/NewVegasCoop). Reusing this code? See LICENSE: credit and the same license are required.
-// Modified in FNVVR-Coop-Compat (https://github.com/joschi127/FNVVR-Coop-Compat): revive, drag and Stimpak prompts name the bound key or gamepad button; a tap of Activate drags.
+// Modified in FNVVR-Coop-Compat (https://github.com/joschi127/FNVVR-Coop-Compat): revive, drag and Stimpak prompts name the bound key or gamepad button; a tap of Activate drags; the dragged friend is a little further behind.
 
 #include "nvse/PluginAPI.h"
 #include "config.h"
@@ -74,7 +74,9 @@
     bool g_gameOver = false;
     int g_reviving = -1;
     uint32_t g_reviveStart = 0, g_reviveAgainAt = 0;
-    constexpr float kDragBehind = 70;
+    // FNVVR-Coop-Compat: 98 instead of 70 (about 40 cm more): close behind, the dragged friend was only in view when
+    // looking straight down, which in VR means bending the head down
+    constexpr float kDragBehind = 98;
     constexpr float kDragFollowMax = 400;
     bool g_grabWas = false;
     int g_draggedBy = -1;
