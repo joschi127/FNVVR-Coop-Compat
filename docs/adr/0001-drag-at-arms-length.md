@@ -45,3 +45,12 @@ larger change and is not attempted.
 - To watch in play: whether loading behind a door ends a drag too early; whether the original kept dragging across
   places on purpose; whether turning only the head in VR flips front and back in an unpleasant way.
 - Changing the rule later is a new ADR.
+
+## Test results (2026-11-21)
+
+- Two PCs, host in VR and friend flat, and both in VR: dragging by tapping Activate works with VR controllers and a
+  gamepad; the arm's length (30 in front, 70 behind) feels right. Walking backwards keeps the friend in view.
+- Through a door: the dragger lets go when the door loads the other place ("not in this place"); New Vegas Co-op then
+  brings the friend through the door as it does for every player, and they arrive standing next to the dragger. That
+  fits fleeing from a fight to a safe place and is kept. So the worry about loading behind doors is settled.
+- Still to watch: turning only the head in VR.
