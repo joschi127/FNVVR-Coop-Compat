@@ -48,8 +48,9 @@ larger change and is not attempted.
 
 ## Test results (2026-11-21)
 
-- Two PCs, host in VR and friend flat, and both in VR: dragging by tapping Activate works with VR controllers and a
-  gamepad; the arm's length (30 in front, 70 behind) feels right. Walking backwards keeps the friend in view.
+- Dragging by tapping Activate works with VR controllers and a gamepad (two PCs: one in VR and one flat, and both
+  in VR). The arm's length (30 in front, 70 behind) was tried with the host in VR and the friend flat and feels
+  right; walking backwards keeps the friend in view.
 - Through a door: the dragger lets go when the door loads the other place ("not in this place"); New Vegas Co-op then
   brings the friend through the door as it does for every player, and they arrive standing next to the dragger. That
   fits fleeing from a fight to a safe place and is kept. So the worry about loading behind doors is settled.
