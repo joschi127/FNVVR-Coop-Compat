@@ -20,10 +20,11 @@ struct Config
     bool secondCopyWaits = false;
     bool blockDiscordOverlay = true;
     bool borderless = true;
-    // FNVVR-Coop-Compat: how far a dragged downed player lies from the one dragging them, in game units. They trail
-    // the way the dragger walks: in front when walking backwards (as people drag, and in view in VR), behind when
-    // walking forwards. The original lay 70 behind.
-    int dragDistance = 30;
+    // FNVVR-Coop-Compat: a dragged downed player is held at arm's length (coop/drag_trail.h): they stay where they
+    // lie until the dragger is further away than this, in game units, then follow. Front applies while they lie in front of the
+    // dragger (walking backwards, as people drag, keeps them in view in VR), back while behind (the original 70).
+    int dragDistanceFront = 30;
+    int dragDistanceBack = 70;
     bool desyncNotices = true;
     int fieldOfView = 0;
     bool friendMarkers = true;

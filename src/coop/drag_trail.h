@@ -7,20 +7,26 @@
 
 namespace coop
 {
-    // How far the dragger has to walk before the side a dragged friend trails on is taken again, in game units
-    constexpr float kDragTrailStep = 8.0f;
-
-    // Keeps (trailX, trailY), a unit vector, pointing back the way the dragger came: from where they were last taken
-    // (fromX, fromY) to where they are now (x, y), reversed. Small steps and standing still keep the last direction.
-    inline void DragTrail(float& fromX, float& fromY, float x, float y, float& trailX, float& trailY)
+    // A dragged friend is held at arm's length: they stay where they lie until the dragger has walked further away
+    // than an arm's length, then they are pulled along the line between both. The arm's length is `front` while the
+    // friend lies in front of the dragger (where they look; people drag walking backwards), `back` behind them, and
+    // in between at the sides.
+    // Returns whether the friend moves, and where to (toX, toY).
+    inline bool DragArmsLength(float friendX, float friendY, float draggerX, float draggerY, float draggerHeading,
+        float front, float back, float& toX, float& toY)
     {
-        float dx = fromX - x, dy = fromY - y;
+        float dx = friendX - draggerX, dy = friendY - draggerY;
         float length = std::sqrt(dx * dx + dy * dy);
-        if (length < kDragTrailStep)
-            return;
-        trailX = dx / length;
-        trailY = dy / length;
-        fromX = x;
-        fromY = y;
+        if (length < 1e-3f)
+            return false;
+        float ux = dx / length, uy = dy / length;
+        // Heading 0 looks along +Y, as the game's
+        float facing = ux * std::sin(draggerHeading) + uy * std::cos(draggerHeading);
+        float reach = (front + back) / 2 + (front - back) / 2 * facing;
+        if (length <= reach)
+            return false;
+        toX = draggerX + reach * ux;
+        toY = draggerY + reach * uy;
+        return true;
     }
 }

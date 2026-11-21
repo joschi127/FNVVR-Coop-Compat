@@ -1,5 +1,5 @@
 // New Vegas Co-op by Zyrcxies (https://github.com/Zyrcxies/NewVegasCoop). Reusing this code? See LICENSE: credit and the same license are required.
-// Modified in FNVVR-Coop-Compat (https://github.com/joschi127/FNVVR-Coop-Compat): revive, drag and Stimpak prompts name the bound key or gamepad button; a tap of Activate drags; where a dragged friend lies is set in NVCoop.ini.
+// Modified in FNVVR-Coop-Compat (https://github.com/joschi127/FNVVR-Coop-Compat): revive, drag and Stimpak prompts name the bound key or gamepad button; a tap of Activate drags; a dragged friend follows at arm's length (NVCoop.ini DragDistanceFront/Back); dragging ends when too far apart.
 
 #include "nvse/PluginAPI.h"
 #include "config.h"
@@ -77,9 +77,6 @@
     uint32_t g_reviveStart = 0, g_reviveAgainAt = 0;
     constexpr float kDragFollowMax = 400;
     bool g_grabWas = false;
-    // FNVVR-Coop-Compat: the way a dragged friend trails (see coop/drag_trail.h)
-    bool g_trailKnown = false;
-    float g_trailFromX = 0, g_trailFromY = 0, g_trailX = 0, g_trailY = 0;
     int g_draggedBy = -1;
     uint32_t g_draggedSince = 0;
     std::string g_reviveHint;
@@ -338,8 +335,6 @@
                 g_downedAt += now - g_draggedSince;
             g_draggedBy = draggedBy;
         }
-        if (!(g_downed && draggedBy >= 0))
-            g_trailKnown = false;
         if (g_downed && draggedBy >= 0)
         {
             auto it = g_coop.Remotes().find(static_cast<uint8_t>(draggedBy));
@@ -347,26 +342,17 @@
             if (it != g_coop.Remotes().end() && it->second.motion.Sample(now, them) && them.space == me.space)
             {
                 coop::Pose to = me;
-                // FNVVR-Coop-Compat: trail the way the dragger walks, NVCoop.ini DragDistance away (the original lay
-                // 70 behind them whichever way they walked; walking backwards, as people drag, left the friend
-                // behind their back and out of view in VR). Standing still keeps the last side; at first, behind.
-                if (!g_trailKnown)
-                {
-                    g_trailFromX = them.x;
-                    g_trailFromY = them.y;
-                    g_trailX = -std::sin(them.heading);
-                    g_trailY = -std::cos(them.heading);
-                    g_trailKnown = true;
-                }
-                coop::DragTrail(g_trailFromX, g_trailFromY, them.x, them.y, g_trailX, g_trailY);
-                float away = static_cast<float>(g_config.dragDistance);
-                to.x = them.x + away * g_trailX;
-                to.y = them.y + away * g_trailY;
+                // FNVVR-Coop-Compat: follow at arm's length instead of always lying 70 behind (coop/drag_trail.h): people
+                // drag walking backwards, which left the friend behind their back and out of view in VR
                 to.heading = them.heading;
-                if (std::fabs(them.z - me.z) > 60)
+                bool climb = std::fabs(them.z - me.z) > 60;
+                if (climb)
                     to.z = them.z;
-                float dx = to.x - me.x, dy = to.y - me.y;
-                if (dx * dx + dy * dy > 1 && dx * dx + dy * dy < kDragFollowMax * kDragFollowMax)
+                float dx = them.x - me.x, dy = them.y - me.y;
+                bool pulled = coop::DragArmsLength(me.x, me.y, them.x, them.y, them.heading,
+                    static_cast<float>(g_config.dragDistanceFront), static_cast<float>(g_config.dragDistanceBack),
+                    to.x, to.y);
+                if ((pulled || climb) && dx * dx + dy * dy < kDragFollowMax * kDragFollowMax)
                     game::Move(player, to);
             }
         }
@@ -403,6 +389,22 @@
                 target = id;
                 name = remote.name;
                 break;
+            }
+        }
+        // FNVVR-Coop-Compat: let go once the dragged friend is too far to follow (kDragFollowMax) or in another place,
+        // e.g. after a door or fast travel. The original kept dragging, so their bleed-out stayed paused while they
+        // lay where they were. Watch whether loading behind a door ends a drag too early.
+        if (dragging >= 0)
+        {
+            coop::Pose at;
+            bool there = game::GetPose(g_standIns.Character(static_cast<uint8_t>(dragging)), at) && at.space == me.space;
+            float dx = at.x - me.x, dy = at.y - me.y;
+            if (!there || dx * dx + dy * dy > kDragFollowMax * kDragFollowMax)
+            {
+                LOG_INFO("Dragging: let go of %s (%s)", g_coop.NameOf(static_cast<uint8_t>(dragging)).c_str(),
+                    there ? "too far to follow" : "not in this place");
+                g_coop.Drag(static_cast<uint8_t>(dragging), false);
+                grabTapped = false;
             }
         }
         if (grabTapped && dragging >= 0)

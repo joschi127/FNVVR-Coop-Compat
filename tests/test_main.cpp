@@ -6561,16 +6561,16 @@ TEST(the_device_last_used_decides_the_prompts)
     CHECK(PadActive(idle));
 }
 
-TEST(a_dragged_friend_trails_the_way_the_dragger_walks)
+TEST(a_dragged_friend_follows_at_arms_length_shorter_in_front)
 {
     using namespace coop;
-    float fromX = 0, fromY = 0, trailX = 0, trailY = -1;     // at first: behind (heading +Y)
-    DragTrail(fromX, fromY, 0, 3, trailX, trailY);           // a small step: no change
-    CHECK(trailX == 0 && trailY == -1 && fromY == 0);
-    DragTrail(fromX, fromY, 0, -20, trailX, trailY);         // walking backwards (towards -Y): friend in front (+Y)
-    CHECK(std::fabs(trailX) < 1e-5f && std::fabs(trailY - 1) < 1e-5f && fromY == -20);
-    DragTrail(fromX, fromY, 0, -20, trailX, trailY);         // standing still keeps the side
-    CHECK(std::fabs(trailY - 1) < 1e-5f);
-    DragTrail(fromX, fromY, 30, -20, trailX, trailY);        // sideways to +X: friend on -X
-    CHECK(std::fabs(trailX + 1) < 1e-5f && std::fabs(trailY) < 1e-5f);
+    float x = 0, y = 0;
+    // Dragger at the origin looking along +Y (heading 0); arm's length 30 in front, 70 behind
+    CHECK(!DragArmsLength(0, 25, 0, 0, 0, 30, 70, x, y));                 // in front, slack: stays
+    CHECK(DragArmsLength(0, 40, 0, 0, 0, 30, 70, x, y));                  // in front, taut: pulled to 30
+    CHECK(std::fabs(x) < 1e-4f && std::fabs(y - 30) < 1e-4f);
+    CHECK(!DragArmsLength(0, -65, 0, 0, 0, 30, 70, x, y));                // behind, slack at 65 < 70
+    CHECK(DragArmsLength(0, -90, 0, 0, 0, 30, 70, x, y) && std::fabs(y + 70) < 1e-4f);
+    CHECK(DragArmsLength(60, 0, 0, 0, 0, 30, 70, x, y) && std::fabs(x - 50) < 1e-4f);  // at the side: 50
+    CHECK(!DragArmsLength(0, 0, 0, 0, 0, 30, 70, x, y));                  // on top of each other: nothing to do
 }

@@ -234,7 +234,8 @@ Config Config::Load(const std::string& iniPath)
     c.secondCopyWaits = Read(iniPath, "SecondCopyWaits", "0") == "1";
     c.blockDiscordOverlay = Read(iniPath, "BlockDiscordOverlay", "1") != "0";
     c.borderless = Read(iniPath, "Borderless", "1") != "0";
-    c.dragDistance = Number(Read(iniPath, "DragDistance", "30"), 0, 300, 30);  // FNVVR-Coop-Compat
+    c.dragDistanceFront = Number(Read(iniPath, "DragDistanceFront", "30"), 0, 300, 30);  // FNVVR-Coop-Compat
+    c.dragDistanceBack = Number(Read(iniPath, "DragDistanceBack", "70"), 0, 300, 70);    // FNVVR-Coop-Compat
     c.desyncNotices = Read(iniPath, "DesyncNotices", "1") != "0";
     c.syncRadio = Read(iniPath, "SyncRadio", "1") != "0";
     c.chat = Read(iniPath, "Chat", "1") != "0";
