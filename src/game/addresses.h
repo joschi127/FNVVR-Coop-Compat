@@ -33,6 +33,11 @@ namespace game::addr
     // (XINPUT_GAMEPAD with a leading event count; VR mods feeding a virtual gamepad write it too)
     constexpr uintptr_t kInputGlobals = 0x011F35CC;
     constexpr uintptr_t kGamepadState = 0x011F35A8;
+    // FNVVR-Coop-Compat: the game's only call that names a control in its texts' &sUActn...; tags
+    // (GetControlPushTextFor, __cdecl: action, buffer, with the "press" prefix). A mod that renames the controls
+    // (FNVVR does for the VR controllers) points this call at its own function.
+    constexpr uintptr_t kControlTextCallSite = 0x00707118;
+    constexpr uintptr_t kControlPushText = 0x007039B0;
     constexpr uintptr_t kMakeStartMenuOptionsCall = 0x007CB886;
     constexpr uintptr_t kMakeStartMenuOptions = 0x007CC6E0;
     constexpr uintptr_t kStartMenuOptionInit = 0x007CE620;

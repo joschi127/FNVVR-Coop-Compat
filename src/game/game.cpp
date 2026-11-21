@@ -3649,6 +3649,36 @@ namespace game
         }
     }
 
+    // The name another mod gives a control in the game's own texts, if one renames them: the game's call that fills
+    // its &sUActn...; tags no longer goes to the game's function. FNVVR does that to name the VR controllers' buttons
+    // ("the right grip"); co-op then shows the same names without knowing about VR.
+    std::string RenamedControl(int control)
+    {
+        const uint8_t* site = reinterpret_cast<const uint8_t*>(addr::kControlTextCallSite);
+        if (site[0] != 0xE8)
+            return {};
+        int32_t offset;
+        std::memcpy(&offset, site + 1, 4);
+        uintptr_t target = addr::kControlTextCallSite + 5 + static_cast<uintptr_t>(offset);
+        if (target == addr::kControlPushText)
+            return {};
+        MEMORY_BASIC_INFORMATION info = {};
+        if (!VirtualQuery(reinterpret_cast<const void*>(target), &info, sizeof(info)) || info.State != MEM_COMMIT ||
+            !(info.Protect & (PAGE_EXECUTE | PAGE_EXECUTE_READ | PAGE_EXECUTE_READWRITE | PAGE_EXECUTE_WRITECOPY)))
+            return {};
+        char text[260] = {};
+        reinterpret_cast<void(__cdecl*)(uint32_t, char*, bool)>(target)(static_cast<uint32_t>(control), text, false);
+        text[sizeof(text) - 1] = 0;
+        static bool logged = false;
+        if (!logged)
+        {
+            logged = true;
+            LOG_INFO("Controls: another mod names the game's controls (%08X); control %d is \"%s\"",
+                static_cast<uint32_t>(target), control, text);
+        }
+        return text;
+    }
+
     bool IsControlPressed(int control)
     {
         uint8_t padInput = Bind(layout::kInputPadBinds, control);
@@ -3671,6 +3701,8 @@ namespace game
                 Bind(layout::kInputKeyBinds, layout::kControlActivate), Bind(layout::kInputPadBinds, layout::kControlActivate),
                 Bind(layout::kInputKeyBinds, layout::kControlGrab), Bind(layout::kInputPadBinds, layout::kControlGrab));
         }
+        if (std::string renamed = RenamedControl(control); !renamed.empty())
+            return renamed;
         return coop::ControlPromptName(UsingGamepad(), Bind(layout::kInputPadBinds, control), KeyName(control),
             defaultKey);
     }
