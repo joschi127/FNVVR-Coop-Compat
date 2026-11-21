@@ -1,4 +1,4 @@
-# Behaviour of the fork's changes
+# Behaviour of FNVVR-Coop-Compat's changes
 
 What a player sees and does with each change of FNVVR-Coop-Compat compared to New Vegas Co-op, why it was changed,
 its settings and its test state. Decisions with alternatives are in [adr/](adr/README.md). Version strings:

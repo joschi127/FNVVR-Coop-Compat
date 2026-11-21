@@ -1,6 +1,6 @@
 # Architecture decision records
 
-Decisions about this fork that shape its behaviour or code and are hard to reverse. Decisions about FNVVR or about
+Decisions about FNVVR-Coop-Compat that shape its behaviour or code and are hard to reverse. Decisions about FNVVR or about
 how the two mods relate live in the FNVVR repository: [joschi127/FNVVR docs/adr](https://github.com/joschi127/FNVVR/blob/coop-compat/docs/adr/README.md)
 (see its ADR 0001 and 0005).
 

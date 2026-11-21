@@ -11,7 +11,7 @@ the changes needed to play New Vegas Co-op together with the VR mod
 help every player (for example gamepad support). It is not the official New Vegas Co-op. Everything that is not
 specific to this fork is documented in the upstream README and CHANGELOG.
 
-The two mods stay separate: FNVVR does not contain co-op code, and this fork does not contain VR code. What the two
+The two mods stay separate: FNVVR does not contain co-op code, and FNVVR-Coop-Compat does not contain VR code. What the two
 need from each other is documented in both repositories and kept as small as possible (see FNVVR's
 `docs/adr/0001-two-separate-mods-that-cooperate.md` and `docs/analysis/conflicts.md`).
 
@@ -26,7 +26,7 @@ This repository is under the New Vegas Co-op licence (`LICENSE`), not FNVVR's zl
   source public under the same licence for as long as they are distributed.
 - Built files of this fork are shared only together with this source and the notices above. The unmodified original
   is never shared or reuploaded (licence section 2); link to the author's pages instead.
-- Code from this fork must not go into FNVVR (its zlib licence cannot take it). Code from FNVVR may come here with its
+- Code from FNVVR-Coop-Compat must not go into FNVVR (its zlib licence cannot take it). Code from FNVVR may come here with its
   zlib notice kept. Facts (addresses, call order, structure layouts) may be used in both.
 
 ## Git workflow
@@ -47,7 +47,7 @@ This repository is under the New Vegas Co-op licence (`LICENSE`), not FNVVR's zl
 - **Behaviour:** [behaviour.md](behaviour.md) describes every change as players see it (controls, prompts,
   settings, test state); update it with each change.
 - **Architecture decision records:** index and list in [adr/README.md](adr/README.md). Decisions with alternatives
-  about this fork's behaviour or code get an ADR here. Decisions about FNVVR or about how the two mods relate are
+  about FNVVR-Coop-Compat's behaviour or code get an ADR here. Decisions about FNVVR or about how the two mods relate are
   in the FNVVR repository's ADRs:
   [joschi127/FNVVR docs/adr/README.md](https://github.com/joschi127/FNVVR/blob/coop-compat/docs/adr/README.md).
 - Plan behaviour changes with the maintainer before coding.
