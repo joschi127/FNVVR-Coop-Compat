@@ -50,4 +50,4 @@ the third-person view was locked, kept in saves. Tested.
 ## Main menu
 
 - Join Co-op: "The last IP address" comes first when `JoinAddress` is set. Tested.
-- Host Co-op: "Steam friends, and by IP address" comes first. Not yet tested in game.
+- Host Co-op: "Steam friends, and by IP address" comes first. Tested.
