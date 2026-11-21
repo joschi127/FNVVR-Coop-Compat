@@ -1,4 +1,6 @@
 // New Vegas Co-op by Zyrcxies (https://github.com/Zyrcxies/NewVegasCoop). Reusing this code? See LICENSE: credit and the same license are required.
+// Modified in FNVVR-Coop-Compat (https://github.com/joschi127/FNVVR-Coop-Compat): quick start is offered once the player
+// is up and walking, so the tutorial's bed camera never stays behind.
 
 #include "nvse/PluginAPI.h"
 #include "config.h"
@@ -98,9 +100,12 @@
             s_nextLook = now + 500;
             int stage = game::QuestStage(game::ids::kTutorialQuest);
             static bool s_asked = false;
-            if (stage >= 0 && stage < 10 && game::QuestStage(game::ids::kBennyIntroQuest) >= 0)
-                return;
-            if (stage < 0 || stage >= 10)
+            // FNVVR-Coop-Compat: ask once the player is up and walking (stage 55), not while still lying on Doc's
+            // bed. Before that the tutorial's script package holds an animated camera and the bed pose; leaving
+            // from there kept the camera rolled sideways and the view switch locked. By stage 55 the tutorial has
+            // removed the package and given back movement, looking and the third-person view on its own.
+            constexpr int kAskFrom = 55, kAskBefore = 60;
+            if (stage < kAskFrom || stage >= kAskBefore)
             {
                 s_asked = false;
                 return;
@@ -113,7 +118,7 @@
                     "level %d (not a new game)", stage, level);
             game::HoldTutorial(true);
             AskSwitches();
-            game::AskChoice("Quick start: skip Doc Mitchell's house?\n\nYou'll be outside his door with the game's "
+            game::AskChoice("Quick start: skip the rest of Doc Mitchell's house?\n\nYou'll be outside his door with the game's "
                 "\"finish your character\" menu (name, looks, S.P.E.C.I.A.L., tag skills, traits) and Doc's starting "
                 "gear. Co-op starts once you're outside.", {"Quick start", "Play the intro"}, kQuickStartQuestion);
             g_quickStart = QuickStart::Asked;
