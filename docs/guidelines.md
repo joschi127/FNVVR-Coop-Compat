@@ -42,6 +42,13 @@ This repository is under the New Vegas Co-op licence (`LICENSE`), not FNVVR's zl
 - Coordination with Zyrcxies (issues, pull requests) is the repository owner's decision. Fixes that help every
   player are good candidates to offer upstream.
 
+## Behaviour and decisions
+
+- [behaviour.md](behaviour.md) describes every change as players see it (controls, prompts, settings, test state);
+  update it with each change.
+- Decisions with alternatives go into [adr/](adr/README.md) of this repository. Decisions about FNVVR or about how
+  the two mods relate stay in the FNVVR repository. Plan behaviour changes with the maintainer before coding.
+
 ## Build and test
 
 See the upstream README (Visual Studio 2026, CMake presets `x86` / `release`). `nvcoop_tests` must pass. Game tests

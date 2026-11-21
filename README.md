@@ -5,7 +5,8 @@
 > Small changes so it plays well with the VR mod [FNVVR](https://github.com/joschi127/FNVVR) and with gamepads:
 > reviving, dragging and giving a Stimpak work with a gamepad or VR controllers, and their prompts name the key or
 > button actually bound; quick start is offered once the player stands up in Doc's house, which keeps the camera
-> from staying rolled sideways. Fork notes: [docs/guidelines.md](docs/guidelines.md). The original README follows.
+> from staying rolled sideways. Fork notes: [docs/guidelines.md](docs/guidelines.md), behaviour of the changes:
+> [docs/behaviour.md](docs/behaviour.md). The original README follows.
 
 ---
 
