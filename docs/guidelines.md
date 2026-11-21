@@ -44,10 +44,13 @@ This repository is under the New Vegas Co-op licence (`LICENSE`), not FNVVR's zl
 
 ## Behaviour and decisions
 
-- [behaviour.md](behaviour.md) describes every change as players see it (controls, prompts, settings, test state);
-  update it with each change.
-- Decisions with alternatives go into [adr/](adr/README.md) of this repository. Decisions about FNVVR or about how
-  the two mods relate stay in the FNVVR repository. Plan behaviour changes with the maintainer before coding.
+- **Behaviour:** [behaviour.md](behaviour.md) describes every change as players see it (controls, prompts,
+  settings, test state); update it with each change.
+- **Architecture decision records:** index and list in [adr/README.md](adr/README.md). Decisions with alternatives
+  about this fork's behaviour or code get an ADR here. Decisions about FNVVR or about how the two mods relate are
+  in the FNVVR repository's ADRs:
+  [joschi127/FNVVR docs/adr/README.md](https://github.com/joschi127/FNVVR/blob/coop-compat/docs/adr/README.md).
+- Plan behaviour changes with the maintainer before coding.
 
 ## Build and test
 
