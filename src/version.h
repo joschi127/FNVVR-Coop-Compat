@@ -3,5 +3,5 @@
 
 #pragma once
 
-#define NVCOOP_VERSION_STRING "0.1.11+fnvvr.2" // FNVVR-Coop-Compat: modified build
+#define NVCOOP_VERSION_STRING "0.1.11+fnvvr.3" // FNVVR-Coop-Compat: modified build
 #define NVCOOP_VERSION_NUMBER 21

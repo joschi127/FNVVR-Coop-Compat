@@ -1,4 +1,5 @@
 // New Vegas Co-op by Zyrcxies (https://github.com/Zyrcxies/NewVegasCoop). Reusing this code? See LICENSE: credit and the same license are required.
+// Modified in FNVVR-Coop-Compat (https://github.com/joschi127/FNVVR-Coop-Compat): "The last IP address" comes first when joining.
 
 #include "nvse/PluginAPI.h"
 
@@ -446,6 +447,13 @@ namespace
             return;
         std::vector<std::string> buttons;
         g_howChoices.clear();
+        // FNVVR-Coop-Compat: the last address first, so joining the usual host is one press (the first button is
+        // the one a gamepad or VR controller has selected); typing an address is awkward in VR
+        if (!g_config.joinAddress.empty())
+        {
+            buttons.push_back("The last IP address");
+            g_howChoices.push_back(JoinHow::LastAddress);
+        }
         if (g_config.lanCoop)
         {
             buttons.push_back(kLanCoopLabel);
@@ -455,11 +463,6 @@ namespace
         g_howChoices.push_back(JoinHow::SteamFriend);
         buttons.push_back("By IP address");
         g_howChoices.push_back(JoinHow::TypeAddress);
-        if (!g_config.joinAddress.empty())
-        {
-            buttons.push_back("The last IP address");
-            g_howChoices.push_back(JoinHow::LastAddress);
-        }
         buttons.push_back("Cancel");
         g_askedHowToJoin = game::AskChoice("Join how?", buttons, kJoinHowQuestion);
     }
