@@ -1,4 +1,5 @@
 // New Vegas Co-op by Zyrcxies (https://github.com/Zyrcxies/NewVegasCoop). Reusing this code? See LICENSE: credit and the same license are required.
+// Modified in FNVVR-Coop-Compat (https://github.com/joschi127/FNVVR-Coop-Compat): revive, drag and Stimpak prompts name the bound key or gamepad button.
 
 #include "nvse/PluginAPI.h"
 #include "config.h"
