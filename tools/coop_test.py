@@ -83,8 +83,10 @@ class CoopTest:
             f.write(result)
 
     def ini_port(self):
-        """The port of [Coop] in NVCoop.ini (27960 when not set)."""
+        """The port of [Coop] in NVCoop.ini (27960 when not set or without the file)."""
         section = ""
+        if not os.path.exists(self.ini):
+            return 27960
         with open(self.ini, encoding="latin-1") as f:
             for line in f:
                 stripped = line.strip()
