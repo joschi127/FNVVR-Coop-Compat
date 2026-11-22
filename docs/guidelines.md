@@ -55,4 +55,6 @@ This repository is under the New Vegas Co-op licence (`LICENSE`), not FNVVR's zl
 ## Build and test
 
 See the upstream README (Visual Studio 2026, CMake presets `x86` / `release`). `nvcoop_tests` must pass. Game tests
-(with FNVVR, `fakefriend`, two PCs) are planned and logged in the FNVVR repository's local notes.
+(with FNVVR, `fakefriend`, two PCs) are planned and logged in the FNVVR repository's local notes. Sessions with a
+person in the headset follow FNVVR-Test-Bridge's [guided headset sessions](https://github.com/joschi127/FNVVR-Test-Bridge/blob/main/docs/headset-sessions.md) (HUD steps,
+questions in the game's message box, the hands-up signal for "done").

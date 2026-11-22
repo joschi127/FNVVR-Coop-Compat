@@ -6,7 +6,12 @@
 > reviving, dragging and giving a Stimpak work with a gamepad or VR controllers, and their prompts name the key or
 > button actually bound; quick start is offered once the player stands up in Doc's house, which keeps the camera
 > from staying rolled sideways. Fork notes: [docs/guidelines.md](docs/guidelines.md), behaviour of the changes:
-> [docs/behaviour.md](docs/behaviour.md). The original README follows.
+> [docs/behaviour.md](docs/behaviour.md).
+>
+> Tested in **guided headset sessions**: the test tool talks to the player in the headset through the game itself
+> (short steps in the HUD, questions with buttons, both hands raised for "done"), so many topics fit into one
+> session without taking the headset off. How it works: [FNVVR-Test-Bridge's guide](https://github.com/joschi127/FNVVR-Test-Bridge/blob/main/docs/headset-sessions.md).
+> The original README follows.
 
 ---
 
