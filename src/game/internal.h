@@ -146,6 +146,8 @@ namespace game
     extern Script* g_onScreen;
     extern Script* g_chatAbove[kChatAboveSlots];
     extern Script* g_mark[kMarkSlots];
+    extern Script* g_markWorld[kMarkSlots];          // FNVVR-Coop-Compat: place in the world for VR mods
+    extern Script* g_aboveWorld[kChatAboveSlots];    // FNVVR-Coop-Compat
     extern Script* g_questStage;
     extern Script* g_tutorialTimer;
     extern Script* g_leaveTutorial;

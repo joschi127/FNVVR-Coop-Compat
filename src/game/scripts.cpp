@@ -1,4 +1,5 @@
 // New Vegas Co-op by Zyrcxies (https://github.com/Zyrcxies/NewVegasCoop). Reusing this code? See LICENSE: credit and the same license are required.
+// Modified in FNVVR-Coop-Compat (https://github.com/joschi127/FNVVR-Coop-Compat): scripts that set the place in the world of name plates and chat above heads, for VR mods.
 
 #include "game/game.h"
 #include "game/level_up.h"
@@ -126,6 +127,8 @@ namespace game
         Script* g_onScreen = nullptr;
         Script* g_chatAbove[kChatAboveSlots] = {};
         Script* g_mark[kMarkSlots] = {};
+        Script* g_markWorld[kMarkSlots] = {};          // FNVVR-Coop-Compat
+        Script* g_aboveWorld[kChatAboveSlots] = {};    // FNVVR-Coop-Compat
         Script* g_questStage = nullptr;
         Script* g_tutorialTimer = nullptr;
         Script* g_leaveTutorial = nullptr;
@@ -770,6 +773,45 @@ namespace game
                 "  endif\n"
                 "  SetUIFloat \"" + path + "/visible\" iShow\n"
                 "End\n");
+        }
+        // FNVVR-Coop-Compat: the place in the world of name plates and chat above heads, for VR mods (user2 to
+        // user4 the anchor, user5 = 1 while shown; see game.cpp UpdateWorldAnchor). The text and colour are set too,
+        // as the flat path only sets them while the friend is on the flat screen.
+        for (int slot = 0; slot < kMarkSlots + kChatAboveSlots; ++slot)
+        {
+            bool mark = slot < kMarkSlots;
+            int n = mark ? slot : slot - kMarkSlots;
+            std::string path = std::string(mark ? "HUDMainMenu/NVCoopMark" : "HUDMainMenu/NVCoopAbove") + std::to_string(n);
+            std::string text = mark ? "%z%rv" : "%z";
+            std::string colour = mark ?
+                "    if iRed\n"
+                "      SetUIFloat \"" + path + "/systemcolor\" 0\n"
+                "      SetUIFloat \"" + path + "/red\" 255\n"
+                "      SetUIFloat \"" + path + "/green\" 60\n"
+                "      SetUIFloat \"" + path + "/blue\" 40\n"
+                "    else\n"
+                "      SetUIFloat \"" + path + "/systemcolor\" 1\n"
+                "    endif\n" : std::string();
+            Script* script = Compile(mark ? "friend marker in the world" : "chat above in the world",
+                "string_var sText\n"
+                "float fX\n"
+                "float fY\n"
+                "float fZ\n"
+                "int iOn\n"
+                "int iText\n"
+                "int iRed\n"
+                "Begin Function {sText, fX, fY, fZ, iOn, iText, iRed}\n"
+                "  if iText\n"
+                "    SetUIStringEx \"" + path + "/string\" \"" + text + "\" sText\n" + colour +
+                "  endif\n"
+                "  if iOn\n"
+                "    SetUIFloat \"" + path + "/user2\" fX\n"
+                "    SetUIFloat \"" + path + "/user3\" fY\n"
+                "    SetUIFloat \"" + path + "/user4\" fZ\n"
+                "  endif\n"
+                "  SetUIFloat \"" + path + "/user5\" iOn\n"
+                "End\n");
+            (mark ? g_markWorld[n] : g_aboveWorld[n]) = script;
         }
         g_tutorialTimer = Compile("tutorial timer",
             "int iRun\n"

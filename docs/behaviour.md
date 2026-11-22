@@ -52,6 +52,23 @@ the third-person view was locked, kept in saves. Tested.
 - Join Co-op: "The last IP address" comes first when `JoinAddress` is set. Tested.
 - Host Co-op: "Steam friends, and by IP address" comes first. Tested.
 
+## Name plates and chat above heads in VR
+
+- **What:** the name plates over friends (`NVCoopMark0..3`, also "DOWNED") and the chat above heads
+  (`NVCoopAbove0..4`) also carry their place in the world: the tile traits `user2` to `user4` hold the anchor
+  (150 units above the character, as on the flat screen), `user5` is 1 while it should be shown, `user6` = 1 marks
+  a name plate as a person's. Text and colour are set as well. This is written also while the friend is off the
+  flat screen, but only in the player's place (same interior, or both outside in the same world).
+- **Why:** the flat game projects the plate with the flat camera; in VR that puts it beside the friend and without
+  depth (FNVVR run c34). FNVVR reads these traits and draws the tile at its place in each eye, and its compass
+  shows a mark for each friend. The interface is general and described in FNVVR's
+  [docs/hud-world-tiles.md](https://github.com/joschi127/FNVVR/blob/coop-compat/docs/hud-world-tiles.md); FNVVR
+  [ADR 0003](https://github.com/joschi127/FNVVR/blob/coop-compat/docs/adr/0003-coop-markers-in-vr.md).
+- **Flat game:** unchanged; the game itself does not read these traits. A script call is made only when a plate
+  appears, disappears, changes its text or moves by more than one unit.
+- **Settings:** none (the flat plates still follow `bFriendMarkers`).
+- **Test state:** not yet tested in game.
+
 ## Testing with fakefriend
 
 [tools/coop_test.py](../tools/coop_test.py) runs co-op without a second person or game copy: it sets `NVCoop.ini`

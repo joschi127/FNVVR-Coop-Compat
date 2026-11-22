@@ -1,5 +1,5 @@
 // New Vegas Co-op by Zyrcxies (https://github.com/Zyrcxies/NewVegasCoop). Reusing this code? See LICENSE: credit and the same license are required.
-// Modified in FNVVR-Coop-Compat (https://github.com/joschi127/FNVVR-Coop-Compat): gamepad state and bindings for co-op's own controls, names of bound keys and buttons.
+// Modified in FNVVR-Coop-Compat (https://github.com/joschi127/FNVVR-Coop-Compat): gamepad state and bindings for co-op's own controls, names of bound keys and buttons; name plates and chat above heads also carry their place in the world for VR mods.
 
 #include "game/game.h"
 #include "game/internal.h"
@@ -2820,6 +2820,8 @@ namespace game
             {
                 std::string xml = "<text name=\"NVCoopAbove" + std::to_string(slot) + "\"><visible>0</visible>"
                     "<user0>0.5</user0><user1>0.5</user1>"
+                    // FNVVR-Coop-Compat: the place in the world for VR mods (docs/behaviour.md)
+                    "<user2>0</user2><user3>0</user3><user4>0</user4><user5>0</user5><user6>0</user6>"
                     "<x><copy src=\"screen()\" trait=\"width\"/><mul src=\"me()\" trait=\"user0\"/></x>"
                     "<y><copy src=\"screen()\" trait=\"height\"/><mul src=\"me()\" trait=\"user1\"/><sub>30</sub></y>"
                     "<font>1</font><justify>&center;</justify><wrapwidth>600</wrapwidth>"
@@ -2862,6 +2864,8 @@ namespace game
             {
                 std::string xml = "<text name=\"NVCoopMark" + std::to_string(slot) + "\"><visible>0</visible>"
                     "<user0>0.5</user0><user1>0.5</user1>"
+                    // FNVVR-Coop-Compat: the place in the world for VR mods, marked as a person's (docs/behaviour.md)
+                    "<user2>0</user2><user3>0</user3><user4>0</user4><user5>0</user5><user6>1</user6>"
                     "<x><copy src=\"screen()\" trait=\"width\"/><mul src=\"me()\" trait=\"user0\"/></x>"
                     "<y><copy src=\"screen()\" trait=\"height\"/><mul src=\"me()\" trait=\"user1\"/><sub>75</sub></y>"
                     "<font>2</font><justify>&center;</justify><wrapwidth>400</wrapwidth>"
@@ -3461,6 +3465,46 @@ namespace game
     {
         struct Mark { uint32_t who = 0; std::string name; bool downed = false, shown = false; };
         Mark g_marks[kMarkSlots];
+
+        // FNVVR-Coop-Compat: name plates and chat above heads also carry their place in the world: user2 to user4
+        // hold the anchor (150 above the character, as on the flat screen), user5 = 1 while it should be shown,
+        // also off the flat screen. The game itself reads none of these; a VR mod (FNVVR) draws the tile at that
+        // place in each eye instead of where the flat camera puts it. See docs/behaviour.md.
+        struct WorldAnchor { uint32_t who = 0; std::string text; bool red = false, on = false; float x = 0, y = 0, z = 0; };
+        WorldAnchor g_markAnchors[kMarkSlots];
+        WorldAnchor g_aboveAnchors[kChatAboveSlots];
+        constexpr float kAnchorHeight = 150.0f;
+        constexpr float kAnchorMoved = 1.0f;
+
+        // In the player's place: the same interior, or both outside in the same world
+        bool InPlayersPlace(const TESObjectREFR* who)
+        {
+            const TESObjectREFR* player = Player();
+            if (!who || !player || !who->parentCell || !player->parentCell)
+                return false;
+            if (who->parentCell == player->parentCell)
+                return true;
+            return !who->parentCell->IsInterior() && !player->parentCell->IsInterior() &&
+                who->parentCell->worldSpace == player->parentCell->worldSpace;
+        }
+
+        void UpdateWorldAnchor(Script* script, WorldAnchor& a, const TESObjectREFR* who, bool on, const std::string& text,
+            bool red)
+        {
+            if (!script || !Player())
+                return;
+            on = on && who && InPlayersPlace(who);
+            float x = on ? who->posX : 0, y = on ? who->posY : 0, z = on ? who->posZ + kAnchorHeight : 0;
+            bool newText = on && (!a.on || a.who != who->refID || a.text != text || a.red != red);
+            bool moved = on && (std::fabs(x - a.x) > kAnchorMoved || std::fabs(y - a.y) > kAnchorMoved ||
+                std::fabs(z - a.z) > kAnchorMoved);
+            if (on == a.on && !newText && !moved)
+                return;
+            g_scripts->CallFunction(script, Player(), nullptr, nullptr, 7, text.empty() ? " " : text.c_str(),
+                *reinterpret_cast<uint32_t*>(&x), *reinterpret_cast<uint32_t*>(&y), *reinterpret_cast<uint32_t*>(&z),
+                static_cast<uint32_t>(on ? 1 : 0), static_cast<uint32_t>(newText ? 1 : 0), static_cast<uint32_t>(red ? 1 : 0));
+            a = on ? WorldAnchor{who->refID, text, red, true, x, y, z} : WorldAnchor{};
+        }
     }
 
     void ShowFriendMarkers(const std::vector<FriendMark>& friends)
@@ -3471,6 +3515,11 @@ namespace game
             TESObjectREFR* who = slot < static_cast<int>(friends.size()) ? friends[slot].who : nullptr;
             const std::string name = who ? friends[slot].text : std::string();
             bool downed = who && friends[slot].downed;
+            if (who || g_markAnchors[slot].on)
+            {
+                MakeChatHud();
+                UpdateWorldAnchor(g_markWorld[slot], g_markAnchors[slot], who, who != nullptr, name, downed);
+            }
             float x = 0, y = 0;
             bool show = false;
             NVSEArrayVarInterface::Element result;
@@ -3509,10 +3558,16 @@ namespace game
         for (int slot = 0; slot < kChatAboveSlots; ++slot)
         {
             ChatAbove& a = g_above[slot];
-            if (!a.who && !a.shown)
+            if (!a.who && !a.shown && !g_aboveAnchors[slot].on)
                 continue;
             NVSEArrayVarInterface::Element result;
             TESObjectREFR* who = a.who ? LookupRef(a.who) : nullptr;
+            if (who)
+                MakeChatHud();
+            UpdateWorldAnchor(g_aboveWorld[slot], g_aboveAnchors[slot], who,
+                who && static_cast<int32_t>(now - a.until) < 0 && DistanceToPlayer(who) < 3500, a.text, false);
+            if (!a.who && !a.shown)
+                continue;
             float x = 0, y = 0;
             bool show = who && static_cast<int32_t>(now - a.until) < 0 && DistanceToPlayer(who) < 3500 && g_onScreen &&
                 g_arrays && g_chatAbove[slot];
