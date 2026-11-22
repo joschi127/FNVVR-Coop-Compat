@@ -56,9 +56,10 @@ the third-person view was locked, kept in saves. Tested.
 
 - **What:** the name plates over friends (`NVCoopMark0..3`, also "DOWNED") and the chat above heads
   (`NVCoopAbove0..4`) also carry their place in the world: the tile traits `user2` to `user4` hold the anchor
-  (150 units above the character, as on the flat screen), `user5` is 1 while it should be shown, `user6` = 1 marks
+  (name plates 150 units above the character as on the flat screen, chat 125, below the name as on the flat screen), `user5` is 1 while it should be shown, `user6` = 1 marks
   a name plate as a person's. Text and colour are set as well. This is written also while the friend is off the
-  flat screen, but only in the player's place (same interior, or both outside in the same world).
+  flat screen, but only in the player's place (same interior, or both outside in the same world). Name plates have
+  no distance limit (FNVVR keeps far ones at 20 m in the friend's direction), chat above heads the flat 3500 units.
 - **Why:** the flat game projects the plate with the flat camera; in VR that puts it beside the friend and without
   depth (FNVVR run c34). FNVVR reads these traits and draws the tile at its place in each eye, and its compass
   shows a mark for each friend. The interface is general and described in FNVVR's

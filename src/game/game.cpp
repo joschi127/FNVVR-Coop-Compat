@@ -3467,13 +3467,16 @@ namespace game
         Mark g_marks[kMarkSlots];
 
         // FNVVR-Coop-Compat: name plates and chat above heads also carry their place in the world: user2 to user4
-        // hold the anchor (150 above the character, as on the flat screen), user5 = 1 while it should be shown,
+        // hold the anchor (name plates 150 above the character as on the flat screen, chat 125), user5 = 1 while it should be shown,
         // also off the flat screen. The game itself reads none of these; a VR mod (FNVVR) draws the tile at that
         // place in each eye instead of where the flat camera puts it. See docs/behaviour.md.
         struct WorldAnchor { uint32_t who = 0; std::string text; bool red = false, on = false; float x = 0, y = 0, z = 0; };
         WorldAnchor g_markAnchors[kMarkSlots];
         WorldAnchor g_aboveAnchors[kChatAboveSlots];
-        constexpr float kAnchorHeight = 150.0f;
+        // Name plates 150 above the character as on the flat screen; chat lower, as the flat screen puts it
+        // nearer the head than the name, so that both can be read at once
+        constexpr float kMarkHeight = 150.0f;
+        constexpr float kChatHeight = 125.0f;
         constexpr float kAnchorMoved = 1.0f;
 
         // In the player's place: the same interior, or both outside in the same world
@@ -3489,12 +3492,12 @@ namespace game
         }
 
         void UpdateWorldAnchor(Script* script, WorldAnchor& a, const TESObjectREFR* who, bool on, const std::string& text,
-            bool red)
+            bool red, float height)
         {
             if (!script || !Player())
                 return;
             on = on && who && InPlayersPlace(who);
-            float x = on ? who->posX : 0, y = on ? who->posY : 0, z = on ? who->posZ + kAnchorHeight : 0;
+            float x = on ? who->posX : 0, y = on ? who->posY : 0, z = on ? who->posZ + height : 0;
             bool newText = on && (!a.on || a.who != who->refID || a.text != text || a.red != red);
             bool moved = on && (std::fabs(x - a.x) > kAnchorMoved || std::fabs(y - a.y) > kAnchorMoved ||
                 std::fabs(z - a.z) > kAnchorMoved);
@@ -3518,7 +3521,7 @@ namespace game
             if (who || g_markAnchors[slot].on)
             {
                 MakeChatHud();
-                UpdateWorldAnchor(g_markWorld[slot], g_markAnchors[slot], who, who != nullptr, name, downed);
+                UpdateWorldAnchor(g_markWorld[slot], g_markAnchors[slot], who, who != nullptr, name, downed, kMarkHeight);
             }
             float x = 0, y = 0;
             bool show = false;
@@ -3565,7 +3568,7 @@ namespace game
             if (who)
                 MakeChatHud();
             UpdateWorldAnchor(g_aboveWorld[slot], g_aboveAnchors[slot], who,
-                who && static_cast<int32_t>(now - a.until) < 0 && DistanceToPlayer(who) < 3500, a.text, false);
+                who && static_cast<int32_t>(now - a.until) < 0 && DistanceToPlayer(who) < 3500, a.text, false, kChatHeight);
             if (!a.who && !a.shown)
                 continue;
             float x = 0, y = 0;
