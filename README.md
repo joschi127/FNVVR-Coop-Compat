@@ -12,7 +12,7 @@
 > (short steps in the HUD, questions with buttons, both hands raised for "done"), so many topics fit into one
 > session without taking the headset off. How it works: [FNVVR-Test-Bridge's guide](https://github.com/joschi127/FNVVR-Test-Bridge/blob/main/docs/headset-sessions.md).
 >
-> <img src="https://github.com/user-attachments/assets/440124fa-b395-4867-80d1-dfe853a1c849" width="300" alt="A question from the test tool in the game's message box, answered with the laser">
+> <img src="https://github.com/user-attachments/assets/4ece22cf-94ed-4203-b3f5-1c2e2c4924f9" width="390" alt="A question from the test tool over the Pip-Boy panel: Casing and round corners ok? Yes, No, Not sure; answered with the laser">
 >
 > The original README follows.
 
