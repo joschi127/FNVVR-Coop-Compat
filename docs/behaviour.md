@@ -51,3 +51,12 @@ the third-person view was locked, kept in saves. Tested.
 
 - Join Co-op: "The last IP address" comes first when `JoinAddress` is set. Tested.
 - Host Co-op: "Steam friends, and by IP address" comes first. Tested.
+
+## Testing with fakefriend
+
+[tools/coop_test.py](../tools/coop_test.py) runs co-op without a second person or game copy: it sets `NVCoop.ini`
+for automatic hosting (`Mode=host`, `AutoApproveJoins=1`, `IpHosting=1`) and restores it byte for byte afterwards,
+waits for "Hosting" and "joined" in `NVCoop.log`, and starts `fakefriend` (built with the mod, `tools/fakefriend`)
+joining this PC by IP. Load a save past the intro; co-op starts hosting within seconds. Works with the flat game
+and with FNVVR (headset or emulator); FNVVR-Test-Bridge (game commands) and FNVVR's VR test channel can drive the
+rest. Used in FNVVR's emulator runs since c34.
