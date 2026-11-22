@@ -9,9 +9,12 @@ emulator); it does not need FNVVR or FNVVR-Test-Bridge.
 
     python -I tools/coop_test.py ini-host  --game <game folder>   NVCoop.ini for the test (keeps a backup)
     python -I tools/coop_test.py ini-restore --game <game folder> back to the backup, checked byte for byte
-    python -I tools/coop_test.py wait-host --game <game folder> [--timeout 300]
+    python -I tools/coop_test.py wait-host --game <game folder> [--timeout 300] [--newer-than <time>]
     python -I tools/coop_test.py friend --exe <fakefriend.exe> --log <file> [fakefriend options ...]
-    python -I tools/coop_test.py wait-join --game <game folder> [--name FakeFriend] [--timeout 60]
+    python -I tools/coop_test.py wait-join --game <game folder> [--name FakeFriend] [--timeout 60] [--newer-than <time>]
+
+Pass --newer-than with the time taken just before starting the game (date +%s), so that a line of the
+previous session's NVCoop.log does not count.
 
 The same functions can be imported (CoopTest). Call ini-host before the game starts (NVCoop.ini in
 Data/NVSE/Plugins is read once at start) and ini-restore after it has quit. Load a save past the intro
@@ -42,29 +45,57 @@ class CoopTest:
     # NVCoop.ini
 
     def ini_host(self, values=None):
-        """Sets the [Coop] keys for automatic hosting; keeps the original next to it (once)."""
+        """Sets the [Coop] keys for automatic hosting; keeps the original next to it (once).
+
+        The game writes the file in the ANSI code page: it is read and written byte for byte (latin-1),
+        keys are matched in [Coop] only and without case, as GetPrivateProfileString does."""
         values = dict(HOST_VALUES, **(values or {}))
         if os.path.exists(self.backup):
             raise RuntimeError(f"a backup exists already ({self.backup}): restore first")
-        shutil.copy2(self.ini, self.backup)
-        with open(self.ini, encoding="utf-8", newline="") as f:
-            lines = f.read().splitlines(keepends=True)
-        seen = set()
+        with open(self.ini, encoding="latin-1", newline="") as f:
+            text = f.read()
+        lines = text.split("\n")
+        wanted = {k.lower(): k for k in values}
+        seen, section, coop_line = set(), "", None
         for i, line in enumerate(lines):
-            m = re.match(r"^(\s*)([A-Za-z]+)(\s*=\s*)([^\r\n]*)(\r?\n?)$", line)
-            if m and m.group(2) in values:
-                lines[i] = f"{m.group(1)}{m.group(2)}{m.group(3)}{values[m.group(2)]}{m.group(5)}"
-                seen.add(m.group(2))
+            stripped = line.strip()
+            if stripped.startswith("[") and "]" in stripped:
+                section = stripped[1:stripped.index("]")].strip().lower()
+                if section == "coop" and coop_line is None:
+                    coop_line = i
+                continue
+            m = re.match(r"^(\s*)([^=;\s]+)(\s*=\s*)([^\r]*)(\r?)$", line)
+            if section == "coop" and m and m.group(2).lower() in wanted:
+                key = wanted[m.group(2).lower()]
+                lines[i] = f"{m.group(1)}{m.group(2)}{m.group(3)}{values[key]}{m.group(5)}"
+                seen.add(key)
         missing = [k for k in values if k not in seen]
         if missing:
-            idx = next((i + 1 for i, l in enumerate(lines) if l.strip().lower() == "[coop]"), None)
-            if idx is None:
+            if coop_line is None:
                 raise RuntimeError("no [Coop] section in NVCoop.ini")
-            nl = "\r\n" if lines and lines[0].endswith("\r\n") else "\n"
+            cr = "\r" if lines and lines[0].endswith("\r") else ""
             for k in missing:
-                lines.insert(idx, f"{k}={values[k]}{nl}")
-        with open(self.ini, "w", encoding="utf-8", newline="") as f:
-            f.write("".join(lines))
+                lines.insert(coop_line + 1, f"{k}={values[k]}{cr}")
+        result = "\n".join(lines)
+        # The backup only once the new text is ready, so that a failure leaves nothing behind
+        shutil.copy2(self.ini, self.backup)
+        with open(self.ini, "w", encoding="latin-1", newline="") as f:
+            f.write(result)
+
+    def ini_port(self):
+        """The port of [Coop] in NVCoop.ini (27960 when not set)."""
+        section = ""
+        with open(self.ini, encoding="latin-1") as f:
+            for line in f:
+                stripped = line.strip()
+                if stripped.startswith("[") and "]" in stripped:
+                    section = stripped[1:stripped.index("]")].strip().lower()
+                elif section == "coop" and "=" in stripped and stripped.split("=", 1)[0].strip().lower() == "port":
+                    try:
+                        return int(stripped.split("=", 1)[1].strip())
+                    except ValueError:
+                        break
+        return 27960
 
     def ini_restore(self):
         if not os.path.exists(self.backup):
@@ -80,12 +111,16 @@ class CoopTest:
     def log_size(self):
         return os.path.getsize(self.log) if os.path.exists(self.log) else 0
 
-    def wait_log(self, pattern, timeout, since=0, poll=0.5):
-        """Waits for a line matching pattern in NVCoop.log after byte offset since; returns the line."""
+    def wait_log(self, pattern, timeout, since=0, newer_than=None, poll=0.5):
+        """Waits for a line matching pattern in NVCoop.log; returns the line.
+
+        since: byte offset to start at in the current log. newer_than: a time (time.time()) taken before the
+        game started: a log last written before it is the previous session's and is not read (the game starts
+        a new NVCoop.log at each start). Without either, an old log's line counts too."""
         rx = re.compile(pattern)
         end = time.monotonic() + timeout
-        while time.monotonic() < end:
-            if os.path.exists(self.log):
+        while True:
+            if os.path.exists(self.log) and (newer_than is None or os.path.getmtime(self.log) >= newer_than):
                 with open(self.log, "rb") as f:
                     if os.path.getsize(self.log) < since:
                         since = 0  # a new log (game restarted)
@@ -93,24 +128,31 @@ class CoopTest:
                     for raw in f.read().decode("utf-8", "replace").splitlines():
                         if rx.search(raw):
                             return raw
+            if time.monotonic() >= end:
+                raise TimeoutError(f"no line /{pattern}/ in {self.log} within {timeout} s")
             time.sleep(poll)
-        raise TimeoutError(f"no line /{pattern}/ in {self.log} within {timeout} s")
 
-    def wait_host(self, timeout=300, since=0):
-        return self.wait_log(r"Hosting (on port|as)", timeout, since)
+    def wait_host(self, timeout=300, since=0, newer_than=None):
+        # Hosting by IP, which fakefriend joins (Steam-only hosting logs "Hosting as" alone)
+        return self.wait_log(r"Hosting on port", timeout, since, newer_than)
 
-    def wait_join(self, name="FakeFriend", timeout=60, since=0):
-        return self.wait_log(re.escape(name) + r" joined as player", timeout, since)
+    def wait_join(self, name="FakeFriend", timeout=60, since=0, newer_than=None):
+        return self.wait_log(re.escape(name) + r" joined as player", timeout, since, newer_than)
 
     # fakefriend
 
-    def start_friend(self, exe, options=(), log_path=None, address="127.0.0.1", port=27960, name="FakeFriend"):
-        """Starts fakefriend joining this PC; its output goes to log_path (or is dropped)."""
+    def start_friend(self, exe, options=(), log_path=None, address="127.0.0.1", port=None, name="FakeFriend"):
+        """Starts fakefriend joining this PC (port: NVCoop.ini's); its output goes to log_path (or is dropped)."""
         if self.friend and self.friend.poll() is None:
             raise RuntimeError("fakefriend runs already")
+        port = port or self.ini_port()
         out = open(log_path, "w", encoding="utf-8") if log_path else subprocess.DEVNULL
-        self.friend = subprocess.Popen([exe, "join", address, str(port), name, *options],
-                                       stdout=out, stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL)
+        try:
+            self.friend = subprocess.Popen([exe, "join", address, str(port), name, *options],
+                                           stdout=out, stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL)
+        finally:
+            if out is not subprocess.DEVNULL:
+                out.close()  # the child has its own handle
         return self.friend
 
     def stop_friend(self, timeout=5):
@@ -131,6 +173,9 @@ def main():
     p.add_argument("--log", help="file for fakefriend's output")
     p.add_argument("--name", default="FakeFriend")
     p.add_argument("--timeout", type=float, default=None)
+    p.add_argument("--newer-than", type=float, default=None,
+                   help="wait-host/wait-join: ignore a log last written before this time (seconds since 1970), "
+                        "taken before the game was started")
     args, rest = p.parse_known_args()
     t = CoopTest(args.game or ".")
     if args.command == "ini-host":
@@ -138,9 +183,9 @@ def main():
     elif args.command == "ini-restore":
         t.ini_restore()
     elif args.command == "wait-host":
-        print(t.wait_host(args.timeout or 300))
+        print(t.wait_host(300 if args.timeout is None else args.timeout, newer_than=args.newer_than))
     elif args.command == "wait-join":
-        print(t.wait_join(args.name, args.timeout or 60))
+        print(t.wait_join(args.name, 60 if args.timeout is None else args.timeout, newer_than=args.newer_than))
     elif args.command == "friend":
         if not args.exe:
             p.error("friend needs --exe")
